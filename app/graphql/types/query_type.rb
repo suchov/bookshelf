@@ -14,4 +14,12 @@ Types::QueryType = GraphQL::ObjectType.define do
       "Hello #{ args[:name]}!"
     }
   end
+
+  field :author, Types::AuthorType do
+    argument :id, types.ID, "The id of the author to retreve"
+    description "One author"
+    resolve ->(obj, args, ctx) {
+      Author.where(id: args[:id]).first
+    }
+  end
 end
