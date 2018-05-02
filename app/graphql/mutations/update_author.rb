@@ -1,5 +1,4 @@
 class Mutations::UpdateAuthor < GraphQL::Function
-
   argument :id, types.ID
   argument :author, Types::AuthorInputType
 
@@ -10,5 +9,4 @@ class Mutations::UpdateAuthor < GraphQL::Function
     author.try :update, args[:author].to_h
     author
   end
-
 end
