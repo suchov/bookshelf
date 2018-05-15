@@ -8,7 +8,8 @@ class GraphqlController < ApplicationController
     operation_name = params[:operationName]
     context = {
       # Query context goes here, for example:
-      current_user: @session.try(:user)
+      current_user: @session.try(:user),
+      session_key: @session.try(:key)
     }
     result = BookshelfSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
     render json: result
@@ -37,7 +38,10 @@ class GraphqlController < ApplicationController
   def check_authentication
     parsed_query = GraphQL::Query.new BookshelfSchema, params[:query]
     operation = parsed_query.selected_operation.selections.first.name
-    return true if BookshelfSchema.query.fields[operation].metadata[:is_public]
+    return true if operation == '__schema'
+
+    field = BookshelfSchema.query.fields[operation] || BookshelfSchema.mutation.fields[operation]
+    return true if field.metadata[:is_public]
 
     unless @session = Session.where(key: request.headers['Authorization']).first
       head(:unauthorized)
