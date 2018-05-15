@@ -24,6 +24,10 @@ Types::QueryType = GraphQL::ObjectType.define do
     }
   end
 
+  field :current_user, Types::UserType do
+    resolve ->(_, _, ctx) {ctx[:current_user]}
+  end
+
   field :author, Types::AuthorType do
     argument :id, types.ID, "The id of the author to retreve"
     description "One author"
