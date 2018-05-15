@@ -1,11 +1,6 @@
 class GraphqlController < ApplicationController
 
-  before_action do
-    unless @session = Session.where(key: request.headers['Authorization']).first
-      head(:unauthorized)
-      false
-    end
-  end
+  before_action :check_authentication
 
   def execute
     variables = ensure_hash(params[:variables])
@@ -13,7 +8,7 @@ class GraphqlController < ApplicationController
     operation_name = params[:operationName]
     context = {
       # Query context goes here, for example:
-      current_user: @session.user
+      current_user: @session.try(:user)
     }
     result = BookshelfSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
     render json: result
@@ -36,6 +31,17 @@ class GraphqlController < ApplicationController
       {}
     else
       raise ArgumentError, "Unexpected parameter: #{ambiguous_param}"
+    end
+  end
+
+  def check_authentication
+    parsed_query = GraphQL::Query.new BookshelfSchema, params[:query]
+    operation = parsed_query.selected_operation.selections.first.name
+    return true if BookshelfSchema.query.fields[operation].metadata[:is_public]
+
+    unless @session = Session.where(key: request.headers['Authorization']).first
+      head(:unauthorized)
+      false
     end
   end
 end
