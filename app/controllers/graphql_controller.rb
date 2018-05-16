@@ -45,7 +45,12 @@ class GraphqlController < ApplicationController
 
     unless @session = Session.where(key: request.headers['Authorization']).first
       head(:unauthorized)
-      false
+      return false
+    end
+
+    unless field.metadata[:must_be].to_a.include? @session.user.role
+      head(:unauthorized)
+      return false
     end
   end
 end
